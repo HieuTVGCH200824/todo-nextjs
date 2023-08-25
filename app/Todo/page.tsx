@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Card,
   CardContent,
@@ -12,14 +10,8 @@ import {
 import TaskList from "@/components/custom/TaskList";
 import QueryClientWrapper from "@/components/custom/QueryClientWrapper";
 import TodoForm from "@/components/custom/TodoForm";
-import { verifyToken } from "@/lib/auth";
-import { useRouter } from "next/navigation";
-import useStore from "@/lib/store";
-import { useEffect } from "react";
 
 export default function Index() {
-
-
   return (
     <QueryClientWrapper>
       <div className="bg-[#020817] w-full h-screen flex justify-center items-center">
