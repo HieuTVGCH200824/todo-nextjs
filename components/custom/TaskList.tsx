@@ -8,47 +8,69 @@ import {
   QueryClientProvider,
 } from "@tanstack/react-query";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import useTodoStore from "@/lib/dummyData";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
+
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export default function TaskList() {
   const { toast } = useToast();
 
-  const [page, setPage] = useState(1);
+  const [editTodo, setEditTodo] = useState({
+    id: 0,
+    title: "",
+    description: "",
+    completed: false,
+  });
+
+  function handleEditSubmit(e: any) {
+    e.preventDefault();
+    const newTodo = {
+      id: editTodo?.id,
+      title: e.target.editTitle.value,
+      description: e.target.editDescription.value,
+      completed: editTodo?.completed,
+    };
+
+    updateMutation.mutate(newTodo);
+  }
+
   const queryClient = useQueryClient();
 
-  // const [todos, setTodos] = useTodoStore((state: any) => [
-  //   state.todos,
-  //   state.setTodos,
-  // ]);
-  const [todos, setTodos] = useState(useTodoStore);
-  //watch todos
-  useEffect(() => {
-    console.log("todos", todos);
-  }, [todos]);
-
   function getTodos() {
-    return Promise.resolve(todos);
+    return fetch("http://localhost:3000/api/todo", {
+      method: "GET",
+    }).then((res) => res.json());
   }
 
   function updateTodo(todo: any) {
-    todo.completed = !todo.completed;
-    const newTodos = todos.map((t: any) => (t.id === todo.id ? todo : t));
-    setTodos(newTodos);
-    return Promise.resolve(todo);
+    return fetch("http://localhost:3000/api/todo", {
+      method: "PUT",
+      body: JSON.stringify(todo),
+    }).then((res) => res.json());
   }
 
   function deleteTodo(id: number) {
-    const newTodos = todos.filter((todo: any) => todo.id !== id);
-    setTodos(newTodos);
-    return Promise.resolve({});
+    return fetch("http://localhost:3000/api/todo", {
+      method: "DELETE",
+      body: JSON.stringify({ id }),
+    }).then((res) => res.json());
   }
 
   const { data, isLoading, isError } = useQuery({
@@ -57,11 +79,14 @@ export default function TaskList() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (newTodo) => {
+    mutationFn: (newTodo: any) => {
       return updateTodo(newTodo);
     },
     onSuccess: (newTodo) => {
-      queryClient.invalidateQueries(["todos"]);
+      queryClient.invalidateQueries(["todos"]); // Invalidate the entire todos list
+      toast({
+        description: "Task updated! 🎉",
+      });
     },
   });
 
@@ -88,15 +113,13 @@ export default function TaskList() {
         {data?.map((todo: any) => (
           <li
             key={todo.id}
-            className="grid grid-cols-5 gap-4 justify-center items-center "
+            className="grid grid-cols-6 gap-4 justify-center items-center "
           >
             <Checkbox
               checked={todo.completed}
-              onCheckedChange={(checked) => {
+              onCheckedChange={() => {
+                todo.completed = !todo.completed;
                 updateMutation.mutate(todo);
-                toast({
-                  description: "Congrats! You completed a task! 🎉",
-                });
               }}
             />
             <div className="col-span-3 cursor-help">
@@ -130,6 +153,69 @@ export default function TaskList() {
                 />
               </svg>
             </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  onClick={() => {
+                    setEditTodo(todo);
+                  }}
+                  variant="ghost"
+                  className="col-span-1 group justify-self-center"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    className="w-6 h-6 text-amber-500"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+                    />
+                  </svg>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Edit task</DialogTitle>
+                  <DialogDescription>
+                    Enter new title and description of the task
+                  </DialogDescription>
+                </DialogHeader>
+                <form action="POST" onSubmit={handleEditSubmit}>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="editTitle" className="text-right">
+                        Title
+                      </Label>
+                      <Input
+                        id="editTitle"
+                        defaultValue={editTodo?.title}
+                        className="col-span-3"
+                      />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="editDescription" className="text-right">
+                        Description
+                      </Label>
+                      <Input
+                        id="editDescription"
+                        defaultValue={editTodo?.description}
+                        className="col-span-3"
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <DialogTrigger asChild>
+                      <Button type="submit">Save changes</Button>
+                    </DialogTrigger>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
           </li>
         ))}
       </ul>

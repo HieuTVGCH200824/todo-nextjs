@@ -15,22 +15,15 @@ import { Button } from "@/components/ui/button";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import useTodoStore from "@/lib/dummyData";
+import useTodoStore from "@/lib/store";
 export default function TodoForm() {
   const queryClient = useQueryClient();
-  const todos = useTodoStore;
-  // const addTodo = useTodoStore((state: any) => state.addTodo);
+
   function createTodos(newTodo: any) {
-    // return fetch("https://jsonplaceholder.typicode.com/todos", {
-    //   method: "POST",
-    //   body: JSON.stringify(newTodo),
-    //   headers: {
-    //     "Content-type": "application/json; charset=UTF-8",
-    //   },
-    // })
-    //   .then((res) => res.json())
-    //   .then((res) => console.log(res));
-    return Promise.resolve(newTodo);
+    return fetch("/api/todo", {
+      method: "POST",
+      body: JSON.stringify(newTodo),
+    }).then((res) => res.json());
   }
 
   const mutation = useMutation({
@@ -80,7 +73,9 @@ export default function TodoForm() {
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit">Save changes</Button>
+            <DialogTrigger asChild>
+              <Button type="submit">Save changes</Button>
+            </DialogTrigger>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -14,11 +14,7 @@ export default function QueryClientWrapper({
   children: React.ReactNode;
 }) {
   const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        cacheTime: 1, // 24 hours
-      },
-    },
+
   });
   return (
     <QueryClientProvider client={queryClient}>
