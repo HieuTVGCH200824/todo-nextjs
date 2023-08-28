@@ -13,16 +13,21 @@ import { useRouter } from "next/navigation"; // Import the useRouter hook
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import useStore from "@/lib/store";
+import { useStore, token } from "@/lib/store";
+import { FormEventHandler } from "react";
 
 export default function Home() {
-  const [setToken] = useStore((state: any) => [state.setToken]);
+  const [setToken] = useStore((state: token) => {
+    return [state.setToken];
+  });
+
   const router = useRouter(); // Initialize the router
 
-  const handleLogin = async (e: any) => {
-    e.preventDefault();
-    const username = e.target.username.value;
-    const password = e.target.password.value;
+  const handleLogin: FormEventHandler<HTMLFormElement> = async (event) => {
+    event.preventDefault();
+    const form = event.target as HTMLFormElement;
+    const username = form.username.value;
+    const password = form.password.value;
 
     const response = await fetch("/api/auth", {
       method: "POST",
@@ -36,6 +41,7 @@ export default function Home() {
         setToken(res.token);
         router.push("/Todo");
       });
+    return response;
   };
 
   return (
@@ -57,7 +63,12 @@ export default function Home() {
                 <Label htmlFor="password" className="text-right">
                   password
                 </Label>
-                <Input id="password" type="password" className="col-span-3" />
+                <Input
+                  id="password"
+                  type="password"
+                  autoComplete="on"
+                  className="col-span-3"
+                />
               </div>
             </div>
           </CardContent>

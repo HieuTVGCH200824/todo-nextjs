@@ -1,12 +1,5 @@
 "use client";
 
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  QueryClient,
-  QueryClientProvider,
-} from "@tanstack/react-query";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 import {
@@ -19,6 +12,10 @@ import { Button } from "@/components/ui/button";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FormEvent } from "react";
+import { Todo } from "@/lib/type";
+import useTodo from "@/lib/useTodo";
+
 import {
   Dialog,
   DialogContent,
@@ -31,7 +28,6 @@ import {
 
 export default function TaskList() {
   const { toast } = useToast();
-
   const [editTodo, setEditTodo] = useState({
     id: 0,
     title: "",
@@ -39,65 +35,29 @@ export default function TaskList() {
     completed: false,
   });
 
-  function handleEditSubmit(e: any) {
+  const {
+    data,
+    isLoading,
+    isError,
+    // addMutation,
+    // updateMutation,
+    // deleteMutation,
+    addTodo,
+    updateTodo,
+    deleteTodo,
+  } = useTodo();
+
+  function handleEditSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const form = e.target as HTMLFormElement;
     const newTodo = {
       id: editTodo?.id,
-      title: e.target.editTitle.value,
-      description: e.target.editDescription.value,
+      title: form.editTitle.value,
+      description: form.editDescription.value,
       completed: editTodo?.completed,
     };
-
-    updateMutation.mutate(newTodo);
+    updateTodo(newTodo);
   }
-
-  const queryClient = useQueryClient();
-
-  function getTodos() {
-    return fetch("http://localhost:3000/api/todo", {
-      method: "GET",
-    }).then((res) => res.json());
-  }
-
-  function updateTodo(todo: any) {
-    return fetch("http://localhost:3000/api/todo", {
-      method: "PUT",
-      body: JSON.stringify(todo),
-    }).then((res) => res.json());
-  }
-
-  function deleteTodo(id: number) {
-    return fetch("http://localhost:3000/api/todo", {
-      method: "DELETE",
-      body: JSON.stringify({ id }),
-    }).then((res) => res.json());
-  }
-
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["todos"],
-    queryFn: getTodos,
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: (newTodo: any) => {
-      return updateTodo(newTodo);
-    },
-    onSuccess: (newTodo) => {
-      queryClient.invalidateQueries(["todos"]); // Invalidate the entire todos list
-      toast({
-        description: "Task updated! 🎉",
-      });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (todo: any) => {
-      return deleteTodo(todo.id);
-    },
-    onSuccess: (id) => {
-      queryClient.invalidateQueries(["todos"]); // Invalidate the entire todos list
-    },
-  });
 
   if (isLoading) {
     return <p>Loading...</p>;
@@ -110,7 +70,7 @@ export default function TaskList() {
   return (
     <div>
       <ul className="flex flex-col gap-4">
-        {data?.map((todo: any) => (
+        {data?.map((todo: Todo) => (
           <li
             key={todo.id}
             className="grid grid-cols-6 gap-4 justify-center items-center "
@@ -119,7 +79,7 @@ export default function TaskList() {
               checked={todo.completed}
               onCheckedChange={() => {
                 todo.completed = !todo.completed;
-                updateMutation.mutate(todo);
+                updateTodo(todo);
               }}
             />
             <div className="col-span-3 cursor-help">
@@ -132,10 +92,7 @@ export default function TaskList() {
               variant="ghost"
               className="col-span-1 group justify-self-center"
               onClick={() => {
-                toast({
-                  description: "Task deleted! 😢",
-                });
-                deleteMutation.mutate(todo);
+                deleteTodo(todo.id);
               }}
             >
               <svg

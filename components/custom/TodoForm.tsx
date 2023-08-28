@@ -10,39 +10,27 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import useTodoStore from "@/lib/store";
+import { Todo } from "@/lib/type";
+import { FormEvent } from "react";
+import useTodo from "@/lib/useTodo";
 export default function TodoForm() {
-  const queryClient = useQueryClient();
+  const { addTodo } = useTodo();
 
-  function createTodos(newTodo: any) {
-    return fetch("/api/todo", {
-      method: "POST",
-      body: JSON.stringify(newTodo),
-    }).then((res) => res.json());
-  }
-
-  const mutation = useMutation({
-    mutationFn: (newTodo: any) => {
-      return createTodos(newTodo);
-    },
-    onSuccess: (newTodo) => {
-      queryClient.invalidateQueries(["todos"]);
-    },
-  });
-
-  function handleSubmit(e: any) {
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const form = e.target as HTMLFormElement;
     const newTodo = {
-      title: e.target.title.value,
-      description: e.target.description.value,
+      id: 0,
+      // @ts-ignore
+      title: form.title.value,
+      description: form.description.value,
       completed: false,
     };
-    mutation.mutate(newTodo);
+    addTodo(newTodo);
   }
 
   return (
@@ -63,13 +51,13 @@ export default function TodoForm() {
               <Label htmlFor="title" className="text-right">
                 Title
               </Label>
-              <Input id="title" className="col-span-3" />
+              <Input id="title" type="text" className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="title" className="text-right">
+              <Label htmlFor="description" className="text-right">
                 Description
               </Label>
-              <Input id="description" className="col-span-3" />
+              <Input id="description" type="text" className="col-span-3" />
             </div>
           </div>
           <DialogFooter>

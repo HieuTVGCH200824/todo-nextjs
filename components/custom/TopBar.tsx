@@ -1,12 +1,12 @@
 "use client";
 import { verifyToken } from "@/lib/auth";
-import useStore from "@/lib/store";
+import { useStore, token } from "@/lib/store";
 import { Badge } from "@/components/ui/badge";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 export default function TopBar() {
   const router = useRouter();
-  const [token, resetToken] = useStore((state: any) => [
+  const [token, resetToken] = useStore((state: token) => [
     state.token,
     state.resetToken,
   ]);
